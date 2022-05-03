@@ -421,7 +421,7 @@ def remove_position_range(df):
     bed_df['lenALT'] = bed_df['ALT'].str.len()
     # bed_df['length'] = bed_df[['lenREF', 'lenALT']].max(axis=1)
     bed_df['end'] = bed_df['start'] + bed_df['lenREF'] - 1
-
+    print(bed_df)
     for _, row in df.iterrows():
         position_number = int(row.Position.split("|")[2])
         if any(start <= position_number <= end for (start, end) in zip(bed_df.start.values.tolist(), bed_df.end.values.tolist())) and not re.search('\|[ATCG]{2,}', row.Position):
@@ -1063,14 +1063,23 @@ def bed_to_df(bed_file):
     return df
 
 
-def remove_bed_positions(df, bed_file):
+def remove_bed_positions(df, bed_file, path_compare):
     bed_df = bed_to_df(bed_file)
+    counter = 0
     for _, row in df.iterrows():
         position_number = int(row.Position.split("|")[2])
         if any(start <= position_number <= end for (start, end) in zip(bed_df.start.values.tolist(), bed_df.end.values.tolist())):
             logger.info('Position: {} removed found in {}'.format(
                 row.Position, bed_file))
+            if counter == 0:
+                df_filter = df[df.Position == row.Position]
+            else:
+                df_aux = df[df.Position == row.Position]
+                df_filter = df_filter.append(df_aux, ignore_index = True)
             df = df[df.Position != row.Position]
+            counter += 1
+    if counter:
+        df_filter.to_csv(path_compare + "/filter_positions.tsv" , sep="\t", index=False)
     return df
 
 
@@ -1376,6 +1385,7 @@ if __name__ == '__main__':
 
         recalibrated_snp_matrix_intermediate = ddbb_create_intermediate(
             out_variant_dir, out_stats_coverage_dir, min_freq_discard=0.1, min_alt_dp=10, only_snp=False, samples=sample_list)
+
         # recalibrated_snp_matrix_intermediate.to_csv(
         #     compare_snp_matrix_recal_intermediate, sep="\t", index=False)
 
@@ -1383,10 +1393,17 @@ if __name__ == '__main__':
 
         if args.remove_bed:
             recalibrated_snp_matrix_intermediate = remove_bed_positions(
-                recalibrated_snp_matrix_intermediate, args.remove_bed)
+                recalibrated_snp_matrix_intermediate, args.remove_bed, path_compare)
 
         recalibrated_snp_matrix_intermediate.to_csv(
             compare_snp_matrix_recal_intermediate, sep="\t", index=False)
+        
+        # Remove SNPs located within INDELs
+        
+        compare_snp_matrix_INDEL_intermediate_df = remove_position_range(
+            recalibrated_snp_matrix_intermediate)
+        compare_snp_matrix_INDEL_intermediate_df.to_csv(
+            compare_snp_matrix_INDEL_intermediate, sep="\t", index=False)
 
         # Recalibrate intermediate with VCF
 
@@ -1399,13 +1416,6 @@ if __name__ == '__main__':
         after_recal = datetime.datetime.now()
         logger.debug("Done with recalibration vcf: %s" %
                      (after_recal - prior_recal))
-
-        # Remove SNPs located within INDELs
-
-        compare_snp_matrix_INDEL_intermediate_df = remove_position_range(
-            recalibrated_snp_matrix_mpileup)
-        compare_snp_matrix_INDEL_intermediate_df.to_csv(
-            compare_snp_matrix_INDEL_intermediate, sep="\t", index=False)
 
         # Extract all positions marked as complex
         complex_variants = extract_complex_list(
