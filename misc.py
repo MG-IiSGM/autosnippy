@@ -200,19 +200,20 @@ def extract_read_list(input_dir):
                 if is_fasta:
                     all_fasta.append(filename)
     all_fasta = sorted(all_fasta)
-    if len(all_fasta) % 2 == 0:
-        for index, fasta_file in enumerate(all_fasta):
-            if index % 2 == 0:
-                r1_list.append(fasta_file)
-            elif index % 1 == 0:
-                r2_list.append(fasta_file)
-    else:
-        logger.info('ERROR: The number of fastq sequence are not paired')
+    samples = [os.path.basename(fasta).split('_')[0] for fasta in all_fasta]
+    remove_sample = [fasta for fasta in samples if samples.count(fasta) == 1]   # Remove unpaired samples
+    for fasta in all_fasta:
+        for pattern in remove_sample:
+            if re.search(pattern, fasta, flags=0): all_fasta.remove(fasta)
+    for index, fasta_file in enumerate(all_fasta):
+        if index % 2 == 0:
+            r1_list.append(fasta_file)
+        elif index % 1 == 0:
+            r2_list.append(fasta_file)
 
     r1_list = sorted(r1_list)
     r2_list = sorted(r2_list)
-
-    return r1_list, r2_list
+    return r1_list, r2_list, remove_sample
 
 
 def return_codon_position(number):
@@ -257,9 +258,9 @@ def calculate_cov_stats(file_cov):
     return sample, mean_cov, unmapped_prop, prop_0_10, prop_10_20, prop_high20, prop_high50, prop_high100, prop_high500, prop_high1000
 
 
-def obtain_group_cov_stats(directory, group_name):
+def obtain_group_cov_stats(directory, group_name, removed_samples):
     directory_path = os.path.abspath(directory)
-    samples_to_skip = []
+    samples_to_skip = removed_samples
     previous_stat = False
 
     output_group_name = group_name + ".coverage.summary.tab"
@@ -544,7 +545,7 @@ def remove_low_quality(output_dir, mean_cov=20, min_coverage=30, min_hq_snp=8, t
 
     sample_list_F = []
 
-    r1, r2 = extract_read_list(output_dir)
+    r1, r2, tmp = extract_read_list(output_dir)
     for r1_file, r2_file in zip(r1, r2):
         sample = extract_sample(r1_file, r2_file)
         sample_list_F.append(sample)

@@ -60,7 +60,7 @@ def run_snippy(r1, r2, reference, output_dir, sample, threads=16, minqual=20, mi
     """
     prefix = os.path.join(output_dir, sample)
 
-    cmd = ["snippy", "--cpus", str(threads), "--outdir", prefix, "--minqual", str(minqual), "--mincov", str(
+    cmd = ["snippy", "--force", "--cpus", str(threads), "--outdir", prefix, "--minqual", str(minqual), "--mincov", str(
         mincov), "--minfrac", str(minfrac), "--ref", reference, "--R1", r1, "--R2", r2]
 
     execute_subprocess(cmd)

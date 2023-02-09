@@ -1,0 +1,29 @@
+2023-02-02 09:51:04,015:
+
+[34m[1mSTARTING PIPELINE IN GROUP: autosnippy[0m
+2023-02-02 09:51:04,015:ARGUMENTS:
+2023-02-02 09:51:04,015:Namespace(annot_aa=['/media/NASII/Datos/DATABASES/ancestorII/Annotation/Compensatory_mutations.aa', '/media/NASII/Datos/DATABASES/ancestorII/Annotation/Compensatory_clean_trad.aa'], annot_bed=[], annot_fasta=[], annot_vcf=['/media/NASII/Datos/DATABASES/ancestorII/Annotation/resistance_h37rv.vcf', '/media/NASII/Datos/DATABASES/ancestorII/Annotation/Lineages_col.vcf'], core=False, coverage20=50, input_dir='.', mash=False, mash_database='/media/NASII/Datos/DATABASES/Mash/bacteria_mash_5000_32.msh', memory=32, min_snp=30, min_threshold_discard_all_pos=0.5, min_threshold_discard_all_sample=0.5, min_threshold_discard_htz_pos=0.5, min_threshold_discard_htz_sample=0.5, min_threshold_discard_uncov_pos=0.5, min_threshold_discard_uncov_sample=0.5, noclean=True, only_snp=False, output='.', primers='/home/laura/DATABASES/Anotacion/COVID/primers/nCoV-2019.bed', reference='/media/NASII/Datos/DATABASES/ancestorII/MTB_ancestorII_reference.fasta', remove_bed='/media/NASII/Datos/DATABASES/ancestorII/Annotation/repeats_phage_coord.bed', sample=None, sample_list=None, snpeff_database='Mycobacterium_tuberculosis_h37rv', threads=16, window=2)
+2023-02-02 09:51:04,016:
+No samples to filter
+2023-02-02 09:51:04,016:
+0 samples will be analysed: 
+2023-02-02 09:51:04,016:
+0 NEW samples will be analysed: 
+2023-02-02 09:51:04,016:[32mCreating summary report for coverage result in group autosnippy[0m
+2023-02-02 09:51:04,020:[Errno 2] No such file or directory: '/home/laura/Script/autosnippy/Stats/autosnippy.coverage.summary.tab'
+Traceback (most recent call last):
+  File "/home/laura/Script/autosnippy/autosnippy.py", line 611, in <module>
+    main()
+  File "/home/laura/Script/autosnippy/autosnippy.py", line 345, in main
+    obtain_group_cov_stats(out_stats_dir, group_name)
+  File "/home/laura/Script/autosnippy/misc.py", line 298, in obtain_group_cov_stats
+    df.to_csv(output_file, sep="\t", index=False)
+  File "/home/laura/miniconda3/envs/autosnippy/lib/python3.7/site-packages/pandas/core/generic.py", line 3402, in to_csv
+    storage_options=storage_options,
+  File "/home/laura/miniconda3/envs/autosnippy/lib/python3.7/site-packages/pandas/io/formats/format.py", line 1083, in to_csv
+    csv_formatter.save()
+  File "/home/laura/miniconda3/envs/autosnippy/lib/python3.7/site-packages/pandas/io/formats/csvs.py", line 234, in save
+    storage_options=self.storage_options,
+  File "/home/laura/miniconda3/envs/autosnippy/lib/python3.7/site-packages/pandas/io/common.py", line 647, in get_handle
+    newline="",
+FileNotFoundError: [Errno 2] No such file or directory: '/home/laura/Script/autosnippy/Stats/autosnippy.coverage.summary.tab'

@@ -112,8 +112,9 @@ def main():
     logger.info(str(args))
 
     # Obtain all R1 and R2 from folder
-    r1, r2 = extract_read_list(args.input_dir)
-
+    r1, r2, removed_samples = extract_read_list(args.input_dir)
+    logger.info("Unpaired samples removed:")
+    logger.info(removed_samples)
     # Check if there are samples to filter out
     sample_list_F = []
     if args.sample_list == None:
@@ -238,17 +239,35 @@ def main():
                     # my $bcf_filter = qq{FMT/GT="1/1" && QUAL>=$minqual && FMT/DP>=$mincov && (FMT/AO)/(FMT/DP)>=$minfrac}; > my $bcf_filter = qq{FMT/GT="1/1" && QUAL>=$minqual && FMT/DP>=$mincov && (FMT/AO)/(FMT/DP)>=$minfrac | FMT/GT="0/1" && QUAL>=$minqual && FMT/DP>=$mincov && (FMT/AO)/(FMT/DP)>=$minfrac};
 
                     prior = datetime.datetime.now()
-                    run_snippy(r1_file, r2_file, reference, out_variant_dir, sample,
-                               threads=args.threads, minqual=10, minfrac=0.1, mincov=1)
-                    old_bam = os.path.join(sample_variant_dir, "snps.bam")
-                    old_bai = os.path.join(sample_variant_dir, "snps.bam.bai")
-                    new_bam = os.path.join(sample_variant_dir, sample + ".bam")
-                    new_bai = os.path.join(
-                        sample_variant_dir, sample + ".bam.bai")
-                    os.rename(old_bam, new_bam)
-                    os.rename(old_bai, new_bai)
-                    after = datetime.datetime.now()
-                    print(("Done with function in: %s" % (after - prior)))
+                    try:
+                        run_snippy(r1_file, r2_file, reference, out_variant_dir, sample,
+                                    threads=args.threads, minqual=10, minfrac=0.1, mincov=1)
+                        old_bam = os.path.join(sample_variant_dir, "snps.bam")
+                        old_bai = os.path.join(sample_variant_dir, "snps.bam.bai")
+                        new_bam = os.path.join(sample_variant_dir, sample + ".bam")
+                        new_bai = os.path.join(
+                            sample_variant_dir, sample + ".bam.bai")
+                        os.rename(old_bam, new_bam)
+                        os.rename(old_bai, new_bai)
+                        after = datetime.datetime.now()
+                        print(("Done with function in: %s" % (after - prior)))
+                    except:
+                        try:
+                            run_snippy(r1_file, r2_file, reference, out_variant_dir, sample,
+                                        threads=args.threads, minqual=10, minfrac=0.1, mincov=1)
+                            old_bam = os.path.join(sample_variant_dir, "snps.bam")
+                            old_bai = os.path.join(sample_variant_dir, "snps.bam.bai")
+                            new_bam = os.path.join(sample_variant_dir, sample + ".bam")
+                            new_bai = os.path.join(
+                                sample_variant_dir, sample + ".bam.bai")
+                            os.rename(old_bam, new_bam)
+                            os.rename(old_bai, new_bai)
+                            after = datetime.datetime.now()
+                            print(("Done with function in: %s" % (after - prior)))
+                        except:
+                            removed_samples.append(sample)
+                            continue
+                        
 
                 #VARIANT FORMAT COMBINATION (REMOVE COMPLEX) ########
                 #####################################################
@@ -371,7 +390,7 @@ def main():
     prior_recal = datetime.datetime.now()
     logger.info(GREEN + "Creating summary report for coverage result in group " +
                 group_name + END_FORMATTING)
-    obtain_group_cov_stats(out_stats_dir, group_name)
+    obtain_group_cov_stats(out_stats_dir, group_name, removed_samples)
     after_recal = datetime.datetime.now()
     logger.info("Done with report for coverage: %s" %
                 (after_recal - prior_recal))
