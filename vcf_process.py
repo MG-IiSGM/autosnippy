@@ -9,7 +9,6 @@ import numpy as np
 import re
 import gzip
 import subprocess
-from itertools import chain
 from misc import check_file_exists, check_create_dir, execute_subprocess, check_remove_file, \
     list_to_bed, count_lines
 
@@ -538,7 +537,6 @@ def import_VCF42_freebayes_to_tsv(vcf_file, sep='\t'):
 
     headers = []
     extra_fields = ['TYPE', 'DP', 'RO', 'AO']
-    div_fields = ['ALT', 'TYPE', 'AO']
     with open(tsv_file, 'w+') as fout:
         with open(vcf_file, 'r') as f:
             next_line = f.readline().strip()
@@ -556,32 +554,16 @@ def import_VCF42_freebayes_to_tsv(vcf_file, sep='\t'):
                 # and not 'complex' in line and not 'mnp' in line
                 if not line.startswith("#"):
                     line_split = line.split(sep)[:8]
-                    if "," in line_split[4]:
-                        info = line_split[-1].split(";")
-                        for field in extra_fields:
-                            extra_field_list.append(
-                                [x.split("=")[-1] for x in info if field in x][0])
-                        line_split.pop()
-                        line_split.extend(extra_field_list)
-                        div_line = [line_split[i].split(',') for i in [4, 7, 10]]
-                        line1 = list(chain(line_split[0:4], [div_line[0][0]], line_split[6:7], [div_line[1][0]], line_split[8:10], [div_line[2][0]]))
-                        line2 = list(chain(line_split[0:4], [div_line[0][1]], line_split[6:7], [div_line[1][1]], line_split[8:10], [div_line[2][1]]))
-                        for line in [line1, line2]:
-                            line_split = line
-                            output_line = ("\t").join(
-                                line_split)
-                            fout.write(output_line + "\n")
-                    else:
-                        info = line_split[-1].split(";")
-                        for field in extra_fields:
-                            extra_field_list.append(
-                                [x.split("=")[-1] for x in info if field in x][0])
-                        if 'OLDVAR' in line:
-                            extra_field_list.append([x.split("=")[-1]
-                                                    for x in info if 'OLDVAR' in x][0].split(',')[0])
-                        output_line = ("\t").join(
-                            line_split[:7] + extra_field_list)
-                        fout.write(output_line + "\n")
+                    info = line_split[-1].split(";")
+                    for field in extra_fields:
+                        extra_field_list.append(
+                            [x.split("=")[-1] for x in info if field in x][0])
+                    if 'OLDVAR' in line:
+                        extra_field_list.append([x.split("=")[-1]
+                                                 for x in info if 'OLDVAR' in x][0].split(',')[0])
+                    output_line = ("\t").join(
+                        line_split[:7] + extra_field_list)
+                    fout.write(output_line + "\n")
 
 
 def import_tsv_freebayes_to_df(tsv_file, sep='\t'):
