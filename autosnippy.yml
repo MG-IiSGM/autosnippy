@@ -1,10 +1,10 @@
 name: autosnippy
 channels:
   - anaconda
-  - bioconda
-  - r
-  - defaults
   - conda-forge
+  - bioconda
+  - defaults
+  - r
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=1_gnu
@@ -19,10 +19,10 @@ dependencies:
   - bwa=0.7.17=h5bf99c6_8
   - bzip2=1.0.8=h7b6447c_0
   - c-ares=1.17.1=h27cfd23_0
-  - ca-certificates=2020.10.14=0
+  - ca-certificates=2022.07.19=h06a4308_0
   - cairo=1.16.0=hf32fb01_1
   - capnproto=0.6.1=hfc679d8_1
-  - certifi=2020.6.20=py37_0
+  - certifi=2022.9.14=py37h06a4308_0
   - click=8.0.1=pyhd3eb1b0_0
   - clustalw=2.1=h7d875b9_6
   - curl=7.71.1=he644dc0_8
@@ -127,7 +127,7 @@ dependencies:
   - numpy=1.20.3=py37h038b26d_1
   - olefile=0.46=py37_0
   - openjdk=8.0.152=h7b6447c_3
-  - openssl=1.1.1k=h27cfd23_0
+  - openssl=1.1.1q=h7f8727e_0
   - paml=4.9=h779adbc_6
   - pandas=1.2.2=py37ha9443f7_0
   - pango=1.48.5=hb8ff022_0
@@ -402,3 +402,4 @@ dependencies:
   - pip:
       - dill==0.3.3
       - pandarallel==1.5.2
+prefix: /home/laura/miniconda3/envs/autosnippy
