@@ -262,7 +262,7 @@ def obtain_group_cov_stats(directory, group_name, removed_samples):
     directory_path = os.path.abspath(directory)
     samples_to_skip = removed_samples
     previous_stat = False
-
+    print(samples_to_skip, type(samples_to_skip))
     output_group_name = group_name + ".coverage.summary.tab"
     output_file = os.path.join(directory_path, output_group_name)
 
@@ -270,8 +270,8 @@ def obtain_group_cov_stats(directory, group_name, removed_samples):
         previous_stat = True
         df_stat = pd.read_csv(output_file, sep="\t")
         samples_to_skip = df_stat["#SAMPLE"].tolist()
-        logger.debug("Skipped samples for coverage calculation:" +
-                     (",").join(samples_to_skip))
+        # logger.debug("Skipped samples for coverage calculation:" +
+        #              (",").join(samples_to_skip))
 
     columns = ["#SAMPLE", "MEAN_COV", "UNMAPPED_PROP", "COV1-10X",
                "COV10-20X", "COV>20X", "COV>50X", "COV>100X", "COV>500X", "COV>1000X"]
