@@ -21,7 +21,7 @@ from vcf_process import vcf_to_ivar_tsv, import_VCF4_core_to_compare
 from annotation import annotate_snpeff, user_annotation, rename_reference_snpeff, report_samples_html, \
     user_annotation_aa, make_blast
 from compare_snp_autosnippy import ddtb_compare, ddbb_create_intermediate, revised_df, recalibrate_ddbb_vcf_intermediate, \
-    remove_position_range, extract_complex_list, identify_uncovered, extract_close_snps, remove_position_from_compare, remove_bed_positions, extract_only_snps
+    remove_position_range, extract_complex_list, identify_uncovered, extract_close_snps, remove_position_from_compare, remove_bed_positions, extract_only_snps, extract_bed_positions
 from species_determination import mash_screen, kraken
 from arguments import get_arguments
 
@@ -639,6 +639,12 @@ def main():
 
     if args.only_snp:
         ddtb_compare(compare_only_snps, distance=5)
+
+    # Annotated SNPs from BED file (genes or positions of interest)
+
+    if args.extract_bed:
+        annotated_snps_final = extract_bed_positions(
+            recalibrated_revised_INDEL_df, args.extract_bed, full_path_compare)
 
     logger.info("\n\n" + MAGENTA + BOLD + "COMPARING FINISHED IN GROUP: " +
                 group_name + END_FORMATTING + "\n")

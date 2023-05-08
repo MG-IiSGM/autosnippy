@@ -65,6 +65,8 @@ def get_arguments():
                              required=False, action='append', help='aminoacid file to annotate')
     annot_group.add_argument('-R', '--remove_bed', type=str, default=False,
                              required=False, help='BED file with positions to remove')
+    annot_group.add_argument('-P', '--extract_bed', required=False, type=str,
+                        default=False, help='BED file with important positions or genes to annotate')
     annot_group.add_argument('--mash_database', dest="mash_db", type=str, required=False,
                              default=False, help='MASH ncbi annotation containing species database')
     annot_group.add_argument("--kraken2", dest="kraken2_db", type=str, default=False,
