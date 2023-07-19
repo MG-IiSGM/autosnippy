@@ -112,9 +112,7 @@ def main():
     logger.info(str(args))
 
     # Obtain all R1 and R2 from folder
-    r1, r2, removed_samples = extract_read_list(args.input_dir)
-    logger.info("Unpaired samples removed:")
-    logger.info(removed_samples)
+    r1, r2 = extract_read_list(args.input_dir)
     # Check if there are samples to filter out
     sample_list_F = []
     if args.sample_list == None:
@@ -223,7 +221,7 @@ def main():
 
                 # VARIANT CALLING WITH SNIPPY
                 ###################################################
-
+                removed_samples = []
                 output_vcf_sub = os.path.join(
                     sample_variant_dir, "snps.subs.vcf")
                 output_vcf = os.path.join(sample_variant_dir, "snps.vcf")
@@ -390,7 +388,7 @@ def main():
     prior_recal = datetime.datetime.now()
     logger.info(GREEN + "Creating summary report for coverage result in group " +
                 group_name + END_FORMATTING)
-    obtain_group_cov_stats(out_stats_dir, group_name, removed_samples)
+    obtain_group_cov_stats(out_stats_dir, group_name)
     after_recal = datetime.datetime.now()
     logger.info("Done with report for coverage: %s" %
                 (after_recal - prior_recal))
