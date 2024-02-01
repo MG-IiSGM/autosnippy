@@ -43,7 +43,7 @@ def get_arguments():
                         type=str, required=False, help='REQUIRED.Input directory containing all vcf files')
     parser.add_argument('-s', '--sample_list', default=False, required=False,
                         help='File with sample names to analyse instead of all samples')
-    parser.add_argument('-d', '--distance', default=0, required=False,
+    parser.add_argument('-d', '--distance', default=15, required=False,
                         help='Minimun distance to cluster groups after comparison')
     parser.add_argument('-c', '--only-compare', dest="only_compare", required=False,
                         default=False, help='Add already calculated snp binary matrix')
@@ -1110,16 +1110,43 @@ def extract_bed_positions(df, bed_file, path_compare):
 
     counter = 0
 
+    # for _, row in df.iterrows():
+    #     position_number = int(row.Position.split("|")[2])
+    #     if any(start <= position_number <= end for (start, end) in zip(bed_df.start.values.tolist(), bed_df.end.values.tolist())):
+    #         logger.info('Position: {} annotated found in {}'.format(
+    #             row.Position, bed_file))
+    #         if counter == 0:
+    #             df_filter = df[df.Position == row.Position]
+    #         else:
+    #             df_aux = df[df.Position == row.Position]
+    #             df_filter = df_filter.append(df_aux, ignore_index=True)
+    #         counter += 1
+
+    # if counter:
+    #     df_filter.to_csv(filtered_position, sep="\t", index=False)
+
     for _, row in df.iterrows():
         position_number = int(row.Position.split("|")[2])
-        if any(start <= position_number <= end for (start, end) in zip(bed_df.start.values.tolist(), bed_df.end.values.tolist())):
+        info = None
+
+        for _, bed_row in bed_df.iterrows():
+            start, end, bed_info = bed_row['start'], bed_row['end'], bed_row['description']
+
+            if start <= position_number <= end:
+                info = bed_info
+                break
+
+        if info is not None:
             logger.info('Position: {} annotated found in {}'.format(
                 row.Position, bed_file))
+
             if counter == 0:
-                df_filter = df[df.Position == row.Position]
+                df_filter = df[df.Position == row.Position].copy()
             else:
-                df_aux = df[df.Position == row.Position]
+                df_aux = df[df.Position == row.Position].copy()
                 df_filter = df_filter.append(df_aux, ignore_index=True)
+
+            df_filter.loc[df_filter['Position'] == row.Position, 'description'] = info
             counter += 1
 
     if counter:
@@ -1498,10 +1525,10 @@ if __name__ == '__main__':
 
         # Matrix to pairwise and mwk
 
-        ddtb_compare(compare_snp_matrix_recal, distance=5)
+        ddtb_compare(compare_snp_matrix_recal, distance=args.distance)
 
         if args.only_snp:
-            ddtb_compare(compare_only_snps, distance=5)
+            ddtb_compare(compare_only_snps, distance=args.distance)
 
         # Annotated SNPs from BED file (genes or positions of interest)
 

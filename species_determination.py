@@ -245,7 +245,7 @@ def extract_species_from_screen(screen_file, identity_threshold=0.9):
 
 def kraken(r1_file, r2_file, report, kraken2_db, krona_html, threads=34):
 
-    cmd_kraken = "kraken2 --db {} --use-names --threads {} --report {} --gzip-compressed {} {}".format(
+    cmd_kraken = "kraken2 --db {} --use-names --threads {} --report {} --gzip-compressed {} {} --output -".format(
         kraken2_db, str(threads), report, r1_file, r2_file)
 
     # print(cmd_kraken)

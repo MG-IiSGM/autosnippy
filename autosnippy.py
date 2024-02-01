@@ -439,7 +439,7 @@ def main():
             core_vcf_df_adapted, to_remove_list)
         remove_df.to_csv(core_vcf_file_removed, sep="\t", index=False)
 
-        ddtb_compare(core_vcf_file_removed, distance=10)
+        ddtb_compare(core_vcf_file_removed, distance=args.distance)
 
     #ANNOTATION WITH SNPEFF AND USER INPUT ##############
     #####################################################
@@ -635,10 +635,10 @@ def main():
 
     # Matrix to pairwise and mwk
 
-    ddtb_compare(compare_snp_matrix_recal, distance=5)
+    ddtb_compare(compare_snp_matrix_recal, distance=args.distance)
 
     if args.only_snp:
-        ddtb_compare(compare_only_snps, distance=5)
+        ddtb_compare(compare_only_snps, distance=args.distance)
 
     # Annotated SNPs from BED file (genes or positions of interest)
 

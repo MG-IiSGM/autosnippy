@@ -21,8 +21,6 @@ def get_arguments():
                              required=False, help='Sample to identify further files')
     input_group.add_argument('-L', '--sample_list', type=str, required=False,
                              help='Sample names to analyse only in the file supplied')
-    input_group.add_argument('-p', '--primers', type=str, default='/home/laura/DATABASES/Anotacion/COVID/primers/nCoV-2019.bed',
-                             required=False, help='Bed file including primers to trim')
 
     quality_group = parser.add_argument_group(
         'Quality parameters', 'parameters for diferent triming conditions')
@@ -66,7 +64,7 @@ def get_arguments():
     annot_group.add_argument('-R', '--remove_bed', type=str, default=False,
                              required=False, help='BED file with positions to remove')
     annot_group.add_argument('-P', '--extract_bed', required=False, type=str,
-                        default=False, help='BED file with important positions or genes to annotate')
+                             default=False, help='BED file with important positions or genes to annotate')
     annot_group.add_argument('--mash_database', dest="mash_db", type=str, required=False,
                              default=False, help='MASH ncbi annotation containing species database')
     annot_group.add_argument("--kraken2", dest="kraken2_db", type=str, default=False,
@@ -95,6 +93,8 @@ def get_arguments():
                                type=float, default=0.5, help='min_threshold_discard_all_pos')
     compare_group.add_argument('--min_threshold_discard_all_sample', required=False,
                                type=float, default=0.5, help='min_threshold_discard_all_sample')
+    compare_group.add_argument('-d', '--distance', default=15, required=False,
+                               help='Minimun distance to cluster groups after comparison')
 
     arguments = parser.parse_args()
 

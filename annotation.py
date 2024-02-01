@@ -63,7 +63,7 @@ def tsv_to_vcf(tsv_file):
     return df
 
 
-def rename_reference_snpeff(input_vcf, output_vcf, new_ref_name='Chromosome'):
+def rename_reference_snpeff(input_vcf, output_vcf, new_ref_name='Chromosome'): # if you have to create a custom snpeff database, you should maybe change the ref_name to annotate or build the custom database changing de genome ID by Chromosome
     with open(input_vcf) as f:
         next_line = f.readline().strip()
         while next_line.startswith("##"):
@@ -91,6 +91,81 @@ def snpeff_execution(vcf_file, annot_file, database=False):
     else:
         with open(annot_file, "w+") as outfile:
             outfile.write('No annotation found')
+
+
+# def import_annot_to_pandas(vcf_file, sep='\t'):
+#     """
+#     Order several annoattion by:
+#     Putative impact: Effects having higher putative impact are first.
+#     Effect type: Effects assumed to be more deleterious effects first.
+#     Canonical transcript before non-canonical.
+#     Marker genomic coordinates (e.g. genes starting before first)
+#     https://pcingola.github.io/SnpEff/se_inputoutput/
+#     Parse vcf outputted by snpEFF which adds the ANN field
+#     Dependences: calculate_ALT_AD
+#                 calculate_true_ALT
+#     """
+#     header_lines = 0
+#     with open(vcf_file) as f:
+#         first_line = f.readline().strip()
+#         if first_line == 'No annotation found':
+#             return pd.read_csv(vcf_file, sep=sep)
+#         next_line = f.readline().strip()
+#         while next_line.startswith("##"):
+#             header_lines = header_lines + 1
+#             # logger.info(next_line)
+#             next_line = f.readline()
+
+#     # Use first line as header
+#     df = pd.read_csv(vcf_file, sep=sep, skiprows=[
+#                      header_lines], header=header_lines)
+
+#     ann_headers = ['Allele',
+#                    'Annotation',
+#                    'Annotation_Impact',
+#                    'Gene_Name',
+#                    'Gene_ID',
+#                    'Feature_Type',
+#                    'Feature_ID',
+#                    'Transcript_BioType',
+#                    'Rank',
+#                    'HGVS.c',
+#                    'HGVS.p',
+#                    'cDNA.pos / cDNA.length',
+#                    'CDS.pos / CDS.length',
+#                    'AA.pos / AA.length',
+#                    'ERRORS / WARNINGS / INFO']
+#     anlelle_headers = ['Codon_change', 'AA_change', 'DP', 'ALT_FREQ']
+
+#     # Apply function to split and recover the first 15 fields = only first anotations, the most likely
+
+#     df[anlelle_headers] = df.apply(lambda x: x.INFO.split(';')[
+#                                    0:4], axis=1, result_type="expand")
+
+#     for head in anlelle_headers:
+#         df[head] = df[head].str.split("=").str[-1]
+
+#     df['TMP_ANN_16'] = df['INFO'].apply(
+#         lambda x: ('|').join(x.split('|')[0:15]))
+
+#     df.INFO = df.INFO.str.split("ANN=").str[-1]
+
+#     df = df.join(df.pop('INFO')
+#                    .str.strip(',')
+#                    .str.split(',', expand=True)
+#                    .stack()
+#                    .reset_index(level=1, drop=True)
+#                    .rename('INFO')).reset_index(drop=True)
+
+#     df['TMP_ANN_16'] = df['INFO'].apply(
+#         lambda x: ('|').join(x.split('|')[0:15]))
+#     df[ann_headers] = df['TMP_ANN_16'].str.split('|', expand=True)
+#     df['HGVS.c'] = df['HGVS.c'].str.split(".").str[-1]
+#     df['HGVS.p'] = df['HGVS.p'].str.split(".").str[-1].replace('', '-')
+
+#     df.drop(["INFO", "TMP_ANN_16"], inplace=True, axis=1)
+
+#     return df
 
 
 def import_annot_to_pandas(vcf_file, sep='\t'):
@@ -135,15 +210,33 @@ def import_annot_to_pandas(vcf_file, sep='\t'):
                    'CDS.pos / CDS.length',
                    'AA.pos / AA.length',
                    'ERRORS / WARNINGS / INFO']
-    anlelle_headers = ['Codon_change', 'AA_change', 'DP', 'ALT_FREQ']
 
-    # Apply function to split and recover the first 15 fields = only first anotations, the most likely
+    df['Type'] = df.apply(lambda row: 'snp' if len(row['REF']) == 1 and len(row['ALT']) == 1 else 'indel', axis=1)
 
-    df[anlelle_headers] = df.apply(lambda x: x.INFO.split(';')[
-                                   0:4], axis=1, result_type="expand")
+    anlelle_headers = ['DP', 'REF_DP', 'ALT_DP']
+    df[anlelle_headers] = pd.DataFrame([[None, None, None]] * len(df), columns=anlelle_headers)
+
+    def assign_values(row):
+        if row['Type'] == 'snp':
+            values = row.INFO.split(';')[1:4] if isinstance(row.INFO, str) else [None, None, None]
+        elif row['Type'] == 'indel':
+            values = [
+                row.INFO.split(';')[2] if isinstance(row.INFO, str) else None,
+                row.INFO.split(';')[5] if isinstance(row.INFO, str) else None,
+                row.INFO.split(';')[1] if isinstance(row.INFO, str) else None
+            ]
+        else:
+            values = [None, None, None]
+        return pd.Series(values)
+
+    df[anlelle_headers] = df.apply(assign_values, axis=1)
 
     for head in anlelle_headers:
         df[head] = df[head].str.split("=").str[-1]
+
+    df['ALT_FREQ'] = pd.to_numeric(df['ALT_DP']) / pd.to_numeric(df['DP'])
+
+    # return df
 
     df['TMP_ANN_16'] = df['INFO'].apply(
         lambda x: ('|').join(x.split('|')[0:15]))
@@ -163,7 +256,7 @@ def import_annot_to_pandas(vcf_file, sep='\t'):
     df['HGVS.c'] = df['HGVS.c'].str.split(".").str[-1]
     df['HGVS.p'] = df['HGVS.p'].str.split(".").str[-1].replace('', '-')
 
-    df.drop(["INFO", "TMP_ANN_16"], inplace=True, axis=1)
+    df.drop(["INFO", "TMP_ANN_16", "REF_DP", "ALT_DP", "Allele", "ERRORS / WARNINGS / INFO", "cDNA.pos / cDNA.length"], inplace=True, axis=1)
 
     return df
 
