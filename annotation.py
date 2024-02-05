@@ -216,17 +216,36 @@ def import_annot_to_pandas(vcf_file, sep='\t'):
     anlelle_headers = ['DP', 'REF_DP', 'ALT_DP']
     df[anlelle_headers] = pd.DataFrame([[None, None, None]] * len(df), columns=anlelle_headers)
 
+    # def assign_values(row):
+    #     if row['Type'] == 'snp':
+    #         values = row.INFO.split(';')[1:4] if isinstance(row.INFO, str) else [None, None, None]
+    #     elif row['Type'] == 'indel' or row['Type'] ==  'del' or row['Type'] == 'ins':
+    #         values = [
+    #             row.INFO.split(';')[2] if isinstance(row.INFO, str) else None,
+    #             row.INFO.split(';')[5] if isinstance(row.INFO, str) else None,
+    #             row.INFO.split(';')[1] if isinstance(row.INFO, str) else None
+    #         ]
+    #     else:
+    #         values = [None, None, None]
+    #     return pd.Series(values)
+  
     def assign_values(row):
+
+        info_parts = row.INFO.split(';') if isinstance(row.INFO, str) else []
+
+        def get_value(prefix):
+            for part in info_parts:
+                if part.startswith(prefix):
+                    return part.split('=')[1]
+            return None
+
         if row['Type'] == 'snp':
-            values = row.INFO.split(';')[1:4] if isinstance(row.INFO, str) else [None, None, None]
-        elif row['Type'] == 'indel':
-            values = [
-                row.INFO.split(';')[2] if isinstance(row.INFO, str) else None,
-                row.INFO.split(';')[5] if isinstance(row.INFO, str) else None,
-                row.INFO.split(';')[1] if isinstance(row.INFO, str) else None
-            ]
+            values = [get_value('DP='), get_value('RO='), get_value('AO=')]
+        elif row['Type'] in ['indel', 'del', 'ins']:
+            values = [get_value('DP='), get_value('RO='), get_value('AO=')]
         else:
             values = [None, None, None]
+
         return pd.Series(values)
 
     df[anlelle_headers] = df.apply(assign_values, axis=1)
