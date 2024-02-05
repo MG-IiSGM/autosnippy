@@ -93,81 +93,6 @@ def snpeff_execution(vcf_file, annot_file, database=False):
             outfile.write('No annotation found')
 
 
-# def import_annot_to_pandas(vcf_file, sep='\t'):
-#     """
-#     Order several annoattion by:
-#     Putative impact: Effects having higher putative impact are first.
-#     Effect type: Effects assumed to be more deleterious effects first.
-#     Canonical transcript before non-canonical.
-#     Marker genomic coordinates (e.g. genes starting before first)
-#     https://pcingola.github.io/SnpEff/se_inputoutput/
-#     Parse vcf outputted by snpEFF which adds the ANN field
-#     Dependences: calculate_ALT_AD
-#                 calculate_true_ALT
-#     """
-#     header_lines = 0
-#     with open(vcf_file) as f:
-#         first_line = f.readline().strip()
-#         if first_line == 'No annotation found':
-#             return pd.read_csv(vcf_file, sep=sep)
-#         next_line = f.readline().strip()
-#         while next_line.startswith("##"):
-#             header_lines = header_lines + 1
-#             # logger.info(next_line)
-#             next_line = f.readline()
-
-#     # Use first line as header
-#     df = pd.read_csv(vcf_file, sep=sep, skiprows=[
-#                      header_lines], header=header_lines)
-
-#     ann_headers = ['Allele',
-#                    'Annotation',
-#                    'Annotation_Impact',
-#                    'Gene_Name',
-#                    'Gene_ID',
-#                    'Feature_Type',
-#                    'Feature_ID',
-#                    'Transcript_BioType',
-#                    'Rank',
-#                    'HGVS.c',
-#                    'HGVS.p',
-#                    'cDNA.pos / cDNA.length',
-#                    'CDS.pos / CDS.length',
-#                    'AA.pos / AA.length',
-#                    'ERRORS / WARNINGS / INFO']
-#     anlelle_headers = ['Codon_change', 'AA_change', 'DP', 'ALT_FREQ']
-
-#     # Apply function to split and recover the first 15 fields = only first anotations, the most likely
-
-#     df[anlelle_headers] = df.apply(lambda x: x.INFO.split(';')[
-#                                    0:4], axis=1, result_type="expand")
-
-#     for head in anlelle_headers:
-#         df[head] = df[head].str.split("=").str[-1]
-
-#     df['TMP_ANN_16'] = df['INFO'].apply(
-#         lambda x: ('|').join(x.split('|')[0:15]))
-
-#     df.INFO = df.INFO.str.split("ANN=").str[-1]
-
-#     df = df.join(df.pop('INFO')
-#                    .str.strip(',')
-#                    .str.split(',', expand=True)
-#                    .stack()
-#                    .reset_index(level=1, drop=True)
-#                    .rename('INFO')).reset_index(drop=True)
-
-#     df['TMP_ANN_16'] = df['INFO'].apply(
-#         lambda x: ('|').join(x.split('|')[0:15]))
-#     df[ann_headers] = df['TMP_ANN_16'].str.split('|', expand=True)
-#     df['HGVS.c'] = df['HGVS.c'].str.split(".").str[-1]
-#     df['HGVS.p'] = df['HGVS.p'].str.split(".").str[-1].replace('', '-')
-
-#     df.drop(["INFO", "TMP_ANN_16"], inplace=True, axis=1)
-
-#     return df
-
-
 def import_annot_to_pandas(vcf_file, sep='\t'):
     """
     Order several annoattion by:
@@ -439,7 +364,7 @@ def checkAA(snpEffRow, dfAnnot, gene):
             if ":" in row.annot:
                 annot_split = row.annot.split(":")
                 if row.aa in snpEffRow and annot_split[0] in gene:
-                    return row.aaAnnot
+                    return annot_split[-1]
     else:
         annotation_list = np.array(df.aaAnnot.tolist())
         return (',').join(annotation_list[np.array(presence_list)])

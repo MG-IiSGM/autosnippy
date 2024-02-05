@@ -383,7 +383,7 @@ def main():
     ######################################################
     logger.info(GREEN + "Creating overal summary report in group " +
                 group_name + END_FORMATTING)
-    # obtain_overal_stats(output, group_name)
+    obtain_overal_stats(output, group_name)
 
     # REMOVE UNCOVERED
     ##############################################################################################################################
