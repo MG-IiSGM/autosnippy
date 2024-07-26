@@ -123,6 +123,7 @@ def create_bamstat(input_bam, output_dir, sample, threads=8):
 def create_coverage(input_bam, output_dir, sample):
     output_file = os.path.join(output_dir, sample + ".cov")
     cmd = "samtools depth -aa {} > {}".format(input_bam, output_file)
+    # cmd = "bedtools genomecov -ibam {} -d -split > {}".format(input_bam, output_file)
     execute_subprocess(cmd, isShell=True)
 
 

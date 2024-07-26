@@ -21,7 +21,7 @@ from vcf_process import vcf_to_ivar_tsv, import_VCF4_core_to_compare
 from annotation import annotate_snpeff, user_annotation, rename_reference_snpeff, report_samples_html, \
     user_annotation_aa, make_blast
 from compare_snp_autosnippy import ddtb_compare, ddbb_create_intermediate, revised_df, recalibrate_ddbb_vcf_intermediate, \
-    remove_position_range, extract_complex_list, identify_uncovered, extract_close_snps, remove_position_from_compare, remove_bed_positions, extract_only_snps, extract_bed_positions
+    remove_position_range, extract_complex_list, identify_uncovered, extract_close_snps, remove_position_from_compare, remove_bed_positions, extract_only_snps, extract_bed_positions, extract_lowcov
 from species_determination import mash_screen, kraken
 from arguments import get_arguments
 
@@ -609,6 +609,18 @@ def main():
     logger.debug('Complex positions in all samples:\n{}'.format(
         (",".join([str(x) for x in complex_variants]))))
 
+    # Extract all low coverage o not covered positions
+
+    prior = datetime.datetime.now()
+
+    symbol_file = full_path_compare + '_symbol_lowcov.tsv'
+    symbol_lowcov = extract_lowcov(compare_snp_matrix_INDEL_intermediate) # It is made by the INDEL_intermediate.tsv, taking 0 and 1 into account, can also be made with intermediate.highfreq.tsv
+    symbol_lowcov.to_csv(symbol_file, sep='\t', index=False)
+
+    after = datetime.datetime.now()
+    print(("Done with function extract_lowcov in: %s" %
+               (after - prior) + "\n"))
+
     # Clean all faulty positions and samples => Final table
 
     recalibrated_revised_INDEL_df = revised_df(compare_snp_matrix_INDEL_intermediate_df,
@@ -625,8 +637,11 @@ def main():
                                                drop_samples=True,
                                                drop_positions=True,
                                                windows_size_discard=args.window)
-    recalibrated_revised_INDEL_df.to_csv(
-        compare_snp_matrix_recal, sep="\t", index=False)
+
+    recalibrated_revised_df = recalibrated_revised_INDEL_df[~recalibrated_revised_INDEL_df['Position'].isin(symbol_lowcov['Position'])]
+
+    recalibrated_revised_df.to_csv(
+            compare_snp_matrix_recal, sep='\t', index=False)
 
     if args.only_snp:
         compare_only_snps_df = extract_only_snps(

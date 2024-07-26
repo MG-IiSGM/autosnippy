@@ -623,22 +623,22 @@ def matrix_to_cluster(pairwise_file, matrix_file, distance=0):
     final_cluster.to_csv(final_cluster_file, sep='\t', index=False)
 
 
-def revised_df(df, out_dir=False, complex_pos=False, min_freq_include=0.8, min_threshold_discard_uncov_sample=0.4, min_threshold_discard_uncov_pos=0.5, min_threshold_discard_htz_sample=0.4, min_threshold_discard_htz_pos=0.4, min_threshold_discard_all_pos=0.6, min_threshold_discard_all_sample=0.6, remove_faulty=True, drop_samples=True, drop_positions=True, windows_size_discard=2):
+def revised_df(df, out_dir=False, complex_pos=False, min_freq_include=0.7, min_threshold_discard_uncov_sample=0.6, min_threshold_discard_uncov_pos=0.5, min_threshold_discard_htz_sample=0.6, min_threshold_discard_htz_pos=0.5, min_threshold_discard_all_pos=0.5, min_threshold_discard_all_sample=0.6, remove_faulty=True, drop_samples=True, drop_positions=True, windows_size_discard=2):
+
     if remove_faulty == True:
 
         uncovered_positions = df.iloc[:, 3:].apply(lambda x:  sum(
             [i in ['!', '?'] for i in x.values])/sum([(i not in [0, '0']) for i in x.values]), axis=1)
         heterozygous_positions = df.iloc[:, 3:].apply(lambda x: sum([(i not in ['!', '?', 0, 1, '0', '1']) and (float(
             i) < min_freq_include) and (float(i) > 0.1) for i in x.values])/sum([(i not in [0, '0']) for i in x.values]), axis=1)
+
         report_position = pd.DataFrame({'Position': df.Position, 'uncov_fract': uncovered_positions,
                                         'htz_frac': heterozygous_positions, 'faulty_frac': uncovered_positions + heterozygous_positions})
         faulty_positions = report_position['Position'][(report_position.uncov_fract >= min_threshold_discard_uncov_pos) | (
             report_position.htz_frac >= min_threshold_discard_htz_pos) | (report_position.faulty_frac >= min_threshold_discard_all_pos)].tolist()
 
-        # uncovered_samples = df.iloc[:, 3:].apply(lambda x: sum(
-        #     [i in ['!'] for i in x.values])/sum([(i not in [0, '0']) for i in x.values]), axis=0)
         uncovered_samples = df.iloc[:, 3:].apply(lambda x: sum(
-            [i in ['!'] for i in x.values])/sum([(i not in [0, '0']) for i in x.values]) if sum([(i not in [0, '0']) for i in x.values]) != 0 else 0, axis=0)  # To avoid 'ZeroDivisionError: division by zero'
+            [i in ['!'] for i in x.values])/sum([(i not in [0, '0']) for i in x.values]), axis=0)
         heterozygous_samples = df.iloc[:, 3:].apply(lambda x: sum([(i not in ['!', '?', 0, 1, '0', '1']) and (float(
             i) < min_freq_include) and (float(i) > 0.1) for i in x.values])/sum([(i not in [0, '0']) for i in x.values]), axis=0)
         report_samples = pd.DataFrame({'sample': df.iloc[:, 3:].columns, 'uncov_fract': uncovered_samples,
@@ -646,17 +646,17 @@ def revised_df(df, out_dir=False, complex_pos=False, min_freq_include=0.8, min_t
         faulty_samples = report_samples['sample'][(report_samples.uncov_fract >= min_threshold_discard_uncov_sample) | (
             report_samples.htz_frac >= min_threshold_discard_htz_sample) | (report_samples.faulty_frac >= min_threshold_discard_all_sample)].tolist()
 
-        # Calculate close SNPS/INDELS and remove those with 2 or more mutations in 10bp
+        # Calculate close SNPs/INDELs and remove those with 2 or more mutations in 10bp
         df['POS'] = df.apply(lambda x: x.Position.split('|')[2], axis=1)
         df['POS'] = df['POS'].astype(int)
-        df = df.sort_values("POS")
+        df = df.sort_values('POS')
         add_window_distance(df)
 
         if out_dir:
             out_dir = os.path.abspath(out_dir)
-            report_samples_file = os.path.join(out_dir, 'report_samples.tsv')
             report_samples_windows = os.path.join(
                 out_dir, 'report_windows.tsv')
+            report_samples_file = os.path.join(out_dir, 'report_samples.tsv')
             report_faulty_samples_file = os.path.join(
                 out_dir, 'faulty_samples.tsv')
             report_positions_file = os.path.join(
@@ -665,18 +665,21 @@ def revised_df(df, out_dir=False, complex_pos=False, min_freq_include=0.8, min_t
                 out_dir, 'faulty_positions.tsv')
             intermediate_cleaned_file = os.path.join(
                 out_dir, 'intermediate.highfreq.tsv')
+
             report_position.to_csv(report_positions_file,
-                                   sep="\t", index=False)
-            report_samples.to_csv(report_samples_file, sep="\t", index=False)
+                                   sep='\t', index=False)
+            report_samples.to_csv(report_samples_file, sep='\t', index=False)
+
             with open(report_faulty_samples_file, 'w+') as f:
                 f.write(('\n').join(faulty_samples))
             with open(report_faulty_positions_file, 'w+') as f2:
                 f2.write(('\n').join(faulty_positions))
 
-            df.to_csv(report_samples_windows, sep="\t")
+            df.to_csv(report_samples_windows, sep='\t')
 
         clustered_positions = df['POS'][df.window_10 >
                                         windows_size_discard].tolist()
+
         if drop_positions == True:
             df = df[~df.Position.isin(faulty_positions)]
         if drop_samples == True:
@@ -687,8 +690,9 @@ def revised_df(df, out_dir=False, complex_pos=False, min_freq_include=0.8, min_t
 
     if len(clustered_positions) == 0:
         clustered_positions = [0]
-    logger.debug('CLUSTERED POSITIONS' + "\n" +
+    logger.debug('CLUSTERED POSITIONS' + '\n' +
                  (',').join([str(x) for x in clustered_positions]))
+
     if complex_pos:
         logger.debug('COMPLEX POSITIONS' + "\n" +
                      (',').join([str(x) for x in complex_pos]))
@@ -709,12 +713,10 @@ def revised_df(df, out_dir=False, complex_pos=False, min_freq_include=0.8, min_t
     df = df.drop('POS', axis=1)
 
     if out_dir != False:
-        df.to_csv(intermediate_cleaned_file, sep="\t", index=False)
+        df.to_csv(intermediate_cleaned_file, sep='\t', index=False)
 
     df = df.replace('!', 0)
-
     df = df.replace('?', 1)
-
     df.iloc[:, 3:] = df.iloc[:, 3:].astype(float)
 
     # Replace Htz to 0
@@ -725,13 +727,12 @@ def revised_df(df, out_dir=False, complex_pos=False, min_freq_include=0.8, min_t
     # IF HANDLE HETEROZYGOUS CHANGE THIS 0 for X or 0.5
     def fn(x): return 1 if x > 0.5 else 0
     df.iloc[:, 3:] = df.iloc[:, 3:].applymap(fn)
-
     df.N = df.apply(lambda x: sum(x[3:]), axis=1)
 
     def extract_sample_name(row):
         count_list = [i not in ['!', 0, '0'] for i in row[3:]]
         samples = np.array(df.columns[3:])
-        # samples[np.array(count_list)] filter array with True False array
+        # samples[np.array(count_list)] # Filter array with True/False array
         return ((',').join(samples[np.array(count_list)]))
 
     df['Samples'] = df.apply(extract_sample_name, axis=1)
@@ -740,6 +741,36 @@ def revised_df(df, out_dir=False, complex_pos=False, min_freq_include=0.8, min_t
     df = df[df.N > 0]
 
     return df
+
+
+def extract_lowcov(intermediate_df):
+    df = pd.read_csv(intermediate_df, sep='\t')
+
+    # Replace Htz with 1
+    # IF HANDLE HETEROZYGOUS CHANGE THIS 0 for X or 0.5
+    def fn(x):
+        if isinstance(x, (int, float)):
+            return 1 if x > 0.5 else 0
+        else:
+            return x
+
+    df.iloc[:, 3:] = df.iloc[:, 3:].applymap(lambda x: fn(float(x)) if isinstance(x, str) and x.replace('.', '', 1).isdigit() else x)
+
+    # Crear un nuevo DataFrame para almacenar las filas filtradas
+    df_symbol = pd.DataFrame(columns=df.columns)
+
+    # Iterar sobre las filas del DataFrame
+    for index, row in df.iterrows():
+        # Filtrar los elementos diferentes de '!' y '?'
+        filtered_row = [x for x in row[3:] if x not in ['!', '?']]
+        # Verificar si todos los elementos de la fila (excluyendo '?' y '!') son iguales
+        if len(set(filtered_row)) == 1:
+            # Añadir la fila al nuevo DataFrame
+            df_symbol = pd.concat([df_symbol, pd.DataFrame([row])], ignore_index=True)
+
+    df_symbol = df_symbol[df_symbol.apply(lambda row: ('!' in row.values) or ('?' in row.values), axis=1)]
+
+    return df_symbol
 
 
 def extract_only_snps(revised_df):
@@ -1493,6 +1524,18 @@ if __name__ == '__main__':
         logger.debug('Complex positions in all samples:\n{}'.format(
             (",".join([str(x) for x in complex_variants]))))
 
+        # Extract all low coverage o not covered positions
+
+        prior = datetime.datetime.now()
+
+        symbol_file = full_path_compare + '_symbol_lowcov.tsv'
+        symbol_lowcov = extract_lowcov(compare_snp_matrix_INDEL_intermediate) # It is made by the INDEL_intermediate.tsv, taking 0 and 1 into account, can also be made with intermediate.highfreq.tsv
+        symbol_lowcov.to_csv(symbol_file, sep='\t', index=False)
+
+        after = datetime.datetime.now()
+        print(("Done with function extract_lowcov in: %s" %
+               (after - prior) + "\n"))
+
         # Clean all faulty positions and samples => Final table
 
         if args.complex:
@@ -1514,8 +1557,11 @@ if __name__ == '__main__':
                                                    drop_samples=True,
                                                    drop_positions=True,
                                                    windows_size_discard=args.window)
-        recalibrated_revised_INDEL_df.to_csv(
-            compare_snp_matrix_recal, sep="\t", index=False)
+
+        recalibrated_revised_df = recalibrated_revised_INDEL_df[~recalibrated_revised_INDEL_df['Position'].isin(symbol_lowcov['Position'])]
+
+        recalibrated_revised_df.to_csv(
+            compare_snp_matrix_recal, sep='\t', index=False)
 
         if args.only_snp:
             compare_only_snps_df = extract_only_snps(
