@@ -51,6 +51,8 @@ python autosnippy.py -i input_folder -o output_folder -T 100 -r reference.fa --s
 | `-V`                | VCF file(s) with custom variant annotations (lineage/resistance markers)  |
 | `-A`                | File with codon-level resistance annotations (requires SnpEff output)     |
 
+Additional parameters can be applied. These can be checked in the script help `autosnippy.py --help`
+
 ---
 
 ### 📄 Example of Optional Input Files
