@@ -1,6 +1,6 @@
 # AutoSnippy: Whole-genome sequencing analysis pipeline for prokaryotes (specialized in _Mycobacterium tuberculosis_)
 
-`AutoSnippy` is a modular, in-house pipeline designed for the analysis of paired-end WGS data from _Mycobacterium tuberculosis_. It performs quality control, variant calling, taxonomic assignment, variant annotation and comparative genomics in a reproducible and structured way.
+`AutoSnippy` is a modular, in-house pipeline designed for the analysis of paired-end WGS data from any prokaryotic microorganism (specialized in _Mycobacterium tuberculosis_). It performs quality control, variant calling, taxonomic assignment, variant annotation and comparative genomics in a reproducible and structured way.
 
 ---
 
@@ -59,7 +59,7 @@ The following optional inputs can be provided to enrich the variant annotation a
 
 #### 🔹 `-R` or `-B` : BED file with regions to exclude (`-R`) (e.g., repeats or phage insertions) or annotate any position within a region (`-B`)
 
-This file defines genomic coordinates (e.g. in BED format) that will be excluded from downstream analysis, such as repetitive or poorly mappable regions in the _M. tuberculosis_ genome.
+This file defines genomic coordinates (e.g. in BED format) that will be excluded from downstream analysis, such as repetitive or poorly mappable regions, or annotated in the _M. tuberculosis_ genome.
 
 **Example:**
 
@@ -91,11 +91,11 @@ This file allows you to specify amino acid substitutions linked to resistance ph
 
 **Example:**
 
-| Substitution | Gene:Drug        |
-| ------------ | ---------------- |
-| Asp435Phe    | rpoB:Rifampicina |
-| Asp435Tyr    | rpoB:Rifampicina |
-| Asp435Val    | rpoB:Rifampicina |
+| Substitution | Gene:Drug       |
+| ------------ | --------------- |
+| Asp435Phe    | rpoB:Rifampicin |
+| Asp435Tyr    | rpoB:Rifampicin |
+| Asp435Val    | rpoB:Rifampicin |
 
 > These inputs are optional, but if `-A` is specified, SnpEff annotation must be run (`--snpeff_database`) to enable codon matching.
 
