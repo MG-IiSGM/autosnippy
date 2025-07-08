@@ -393,37 +393,37 @@ def extract_mapped_reads(output_dir, sample):
         return None
 
 
-def extract_n_consensus(output_dir, sample):
-    sample = str(sample)
-    if '.' in sample:
-        sample = sample.split('.')[0]
-    consensus_folder = os.path.join(output_dir, 'Variants')
-    consensus_folder_sample = os.path.join(consensus_folder, sample)
-    filename = os.path.join(consensus_folder_sample, "snps.consensus.fa")
+# def extract_n_consensus(output_dir, sample):
+#     sample = str(sample)
+#     if '.' in sample:
+#         sample = sample.split('.')[0]
+#     consensus_folder = os.path.join(output_dir, 'Variants')
+#     consensus_folder_sample = os.path.join(consensus_folder, sample)
+#     filename = os.path.join(consensus_folder_sample, "snps.consensus.fa")
 
-    if os.path.exists(filename):
-        with open(filename, 'r') as f:
-            content = f.read()
-            content_list = content.split('\n')
-            #sample_fq = content_list[0].strip(">")
-            # In case fasta is in several lines(not by default)
-            sequence = ("").join(content_list[1:]).strip()
-            all_N = re.findall(r'N+', sequence)
-            if all_N:
-                leading_N = re.findall(r'^N+', sequence)
-                tailing_N = re.findall(r'N+$', sequence)
-                length_N = [len(x) for x in all_N]
-                individual_N = [x for x in length_N if x == 1]
-                mean_length_N = mean(length_N)
-                sum_length_N = sum(length_N)
-                total_perc_N = sum_length_N / len(sequence) * 100
-                return(len(all_N), len(individual_N), len(leading_N), len(tailing_N), sum_length_N, total_perc_N, mean_length_N)
-            else:
-                return(0, 0, 0, 0, 0, 0, 0)
+#     if os.path.exists(filename):
+#         with open(filename, 'r') as f:
+#             content = f.read()
+#             content_list = content.split('\n')
+#             #sample_fq = content_list[0].strip(">")
+#             # In case fasta is in several lines(not by default)
+#             sequence = ("").join(content_list[1:]).strip()
+#             all_N = re.findall(r'N+', sequence)
+#             if all_N:
+#                 leading_N = re.findall(r'^N+', sequence)
+#                 tailing_N = re.findall(r'N+$', sequence)
+#                 length_N = [len(x) for x in all_N]
+#                 individual_N = [x for x in length_N if x == 1]
+#                 mean_length_N = mean(length_N)
+#                 sum_length_N = sum(length_N)
+#                 total_perc_N = sum_length_N / len(sequence) * 100
+#                 return(len(all_N), len(individual_N), len(leading_N), len(tailing_N), sum_length_N, total_perc_N, mean_length_N)
+#             else:
+#                 return(0, 0, 0, 0, 0, 0, 0)
 
-    else:
-        logger.info("FILE " + filename + " NOT FOUND")
-        return None
+#     else:
+#         logger.info("FILE " + filename + " NOT FOUND")
+#         return None
 
 
 def obtain_overal_stats(output_dir, group):
@@ -455,8 +455,8 @@ def obtain_overal_stats(output_dir, group):
                         output_dir, x['#SAMPLE']), axis=1, result_type="expand")
                     df[['mapped_reads', 'perc_mapped', 'paired_mapped', 'perc_paired']] = df.parallel_apply(
                         lambda x: extract_mapped_reads(output_dir, x['#SAMPLE']), axis=1, result_type="expand")
-                    df[['N_groups', 'N_individual', 'N_leading', 'N_tailing', 'N_sum_len', 'N_total_perc', 'N_mean_len']] = df.parallel_apply(
-                        lambda x: extract_n_consensus(output_dir, x['#SAMPLE']), axis=1, result_type="expand")
+                    # df[['N_groups', 'N_individual', 'N_leading', 'N_tailing', 'N_sum_len', 'N_total_perc', 'N_mean_len']] = df.parallel_apply(
+                    #     lambda x: extract_n_consensus(output_dir, x['#SAMPLE']), axis=1, result_type="expand")
 
     if previous_stat:
         df = pd.concat([df_stat, df], ignore_index=True, sort=True)
