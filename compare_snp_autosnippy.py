@@ -366,6 +366,9 @@ def ddbb_create_intermediate(variant_dir, coverage_dir, min_freq_discard=0.1, mi
                 filename = os.path.join(root, name)
                 sample = name.split('.')[0]
                 if sample in df.columns[4:]:
+                    if sample not in samples_coverage: # 
+                        logger.error(f"ERROR: {sample} no está en samples_coverage.")
+                        raise ValueError(f"{sample} no está en samples_coverage")
                     samples_coverage.remove(sample)
                     logger.debug("Adding uncovered: " + sample)
                     dfc = extract_uncovered(filename)
