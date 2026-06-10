@@ -131,6 +131,7 @@ def import_variants_uncovPos_complex(
     min_freq_discard: float,
     window_size: int,
     max_variants_window: int,
+    apply_complex: bool = True,
 ) -> Tuple[pl.DataFrame, pl.DataFrame, pl.DataFrame, np.ndarray, np.ndarray]:
 
     """
@@ -180,18 +181,19 @@ def import_variants_uncovPos_complex(
     depth_low  = pl.col('TOTAL_DP') <  min_total_depth   # '<' to avoid overlap
     cov_ok     = pl.col('TOTAL_DP') >  min_cov          # above noise threshold
     freq_mask  = pl.col('ALT_FREQ') >= min_freq_include
-    # snp_mask   = pl.col('TYPE')     == 'snp'
 
     # ── Complex positions ────────────────────────────────────────────────────
-    complex_pos = (
-        df
-        .filter(pl.col('OLDVAR').is_not_null())
-        .select('POS')
-        .to_series()
-        .cast(pl.Int32)
-        .unique()
-        .to_numpy()
-    )
+    complex_pos = np.array([], dtype=np.int32)  # default vacío
+    if apply_complex:
+        complex_pos = (
+            df
+            .filter(pl.col('OLDVAR').is_not_null())
+            .select('POS')
+            .to_series()
+            .cast(pl.Int32)
+            .unique()
+            .to_numpy()
+        )
 
     # ── Main variants ────────────────────────────────────────────────────────
     dfv = (
@@ -240,53 +242,55 @@ def import_variants_uncovPos_complex(
     # simultaneously pass min_total_depth AND min_freq_discard.
     # If any variant in the window fails either threshold, the entire
     # window is disqualified — avoids removing real variants near noise.
-    hotspot_pos: Set[int] = set()
+    hotspot_array = np.array([], dtype=np.int32)
 
-    # Candidates: variants passing both depth and frequency thresholds
-    candidates = df.filter(
-        (pl.col('TOTAL_DP') >= min_total_depth) &
-        (pl.col('ALT_FREQ') >= min_freq_discard)
-    ).select(['POS', 'TOTAL_DP', 'ALT_FREQ'])
+    if apply_complex:
+        hotspot_pos: Set[int] = set()
 
-    # All variants in the file (used to check for disqualifying entries
-    # within a window — any variant below either threshold disqualifies)
-    all_variants = df.select(['POS', 'TOTAL_DP', 'ALT_FREQ'])
+        # Candidates: variants passing both depth and frequency thresholds
+        candidates = df.filter(
+            (pl.col('TOTAL_DP') >= min_total_depth) &
+            (pl.col('ALT_FREQ') >= min_freq_discard)
+        ).select(['POS', 'TOTAL_DP', 'ALT_FREQ'])
 
-    if candidates.height > max_variants_window:
-        cand_pos   = candidates['POS'].to_list()
-        all_pos    = all_variants['POS'].to_list()
-        all_dp     = all_variants['TOTAL_DP'].to_list()
-        all_freq   = all_variants['ALT_FREQ'].to_list()
+        # All variants in the file (used to check for disqualifying entries
+        # within a window — any variant below either threshold disqualifies)
+        all_variants = df.select(['POS', 'TOTAL_DP', 'ALT_FREQ'])
 
-        for pos in cand_pos:
+        if candidates.height > max_variants_window:
+            cand_pos   = candidates['POS'].to_list()
+            all_pos    = all_variants['POS'].to_list()
+            all_dp     = all_variants['TOTAL_DP'].to_list()
+            all_freq   = all_variants['ALT_FREQ'].to_list()
 
-            # Collect all variants (not just candidates) within the window
-            window_indices = [
-                i for i, p in enumerate(all_pos)
-                if abs(p - pos) <= window_size
-            ]
+            for pos in cand_pos:
+                # Collect all variants (not just candidates) within the window
+                window_indices = [
+                    i for i, p in enumerate(all_pos)
+                    if abs(p - pos) <= window_size
+                ]
 
-            # Disqualify window if any variant fails either threshold
-            any_below = any(
-                all_dp[i] < min_total_depth or all_freq[i] < min_freq_discard
-                for i in window_indices
-            )
-
-            if any_below:
-                continue
-
-            # Count candidates within the window
-            window_candidates = [p for p in cand_pos if abs(p - pos) <= window_size]
-
-            if len(window_candidates) > max_variants_window:
-                hotspot_pos.update(window_candidates)
-                logger.debug(
-                    f"[HOTSPOT] {sample} | pos {pos} | "
-                    f"{len(window_candidates)} variants in {window_size}bp "
-                    f"window → flagged positions: {'; '.join(str(p) for p in sorted(window_candidates))}"
+                # Disqualify window if any variant fails either threshold
+                any_below = any(
+                    all_dp[i] < min_total_depth or all_freq[i] < min_freq_discard
+                    for i in window_indices
                 )
 
-    hotspot_array = np.array(sorted(hotspot_pos), dtype=np.int32)
+                if any_below:
+                    continue
+
+                # Count candidates within the window
+                window_candidates = [p for p in cand_pos if abs(p - pos) <= window_size]
+
+                if len(window_candidates) > max_variants_window:
+                    hotspot_pos.update(window_candidates)
+                    logger.debug(
+                        f"[HOTSPOT] {sample} | pos {pos} | "
+                        f"{len(window_candidates)} variants in {window_size}bp "
+                        f"window → flagged positions: {'; '.join(str(p) for p in sorted(window_candidates))}"
+                    )
+
+        hotspot_array = np.array(sorted(hotspot_pos), dtype=np.int32)
 
     return dfv, dfl, cov, complex_pos, hotspot_array
 
@@ -301,6 +305,7 @@ def _process_sample(
     min_freq_discard: float,
     window_size: int,
     max_variants_window: int,
+    apply_complex: bool = True,
 ) -> Optional[Tuple[str, pl.DataFrame, pl.DataFrame, pl.DataFrame, np.ndarray, np.ndarray]]:
 
     """
@@ -329,7 +334,9 @@ def _process_sample(
             min_freq_discard=min_freq_discard,
             window_size=window_size,
             max_variants_window=max_variants_window,
+            apply_complex=apply_complex,
         )
+
         logger.debug(f"[OK] {sample}")
         return sample, dfv, dfl, cov, complex_pos, hotspot_pos
 
@@ -431,6 +438,7 @@ def ddbb_create_intermediate(
                 min_freq_discard,
                 window_size,
                 max_variants_window,
+                apply_complex,
             ): s
             for s in sample_iterable
         }
